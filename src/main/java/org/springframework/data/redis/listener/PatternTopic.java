@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,17 @@ public class PatternTopic implements Topic {
 		Assert.notNull(pattern, "Pattern must not be null!");
 
 		this.channelPattern = pattern;
+	}
+
+	/**
+	 * Create a new {@link PatternTopic} for channel subscriptions based on a {@code pattern}.
+	 * 
+	 * @param pattern the channel pattern, must not be {@literal null} or empty.
+	 * @return the {@link PatternTopic} for {@code pattern}.
+	 * @since 2.1
+	 */
+	static PatternTopic of(String pattern) {
+		return new PatternTopic(pattern);
 	}
 
 	/**
