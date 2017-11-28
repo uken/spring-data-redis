@@ -20,19 +20,22 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
+import java.util.Set;
+
+import org.springframework.util.Assert;
 
 /**
- * Subscription for Redis channels using reactive infrastructure. A {@link ReactiveSubscription} allows subscription to
+ * Subscription for Redis channels using reactive infrastructure. A {@link ReactiveSubscription} allows subscribing to
  * {@link #subscribe(ByteBuffer...) channels} and {@link #pSubscribe(ByteBuffer...) patterns}. It provides access to the
  * {@link ChannelMessage} {@link #receive() stream} that emits only messages for channels and patterns registered in
  * this {@link ReactiveSubscription}.
- * <p/>
+ * <p />
  * A reactive Redis connection can have multiple subscriptions. If two or more subscriptions subscribe to the same
  * target (channel/pattern) and one unsubscribes, then the other one will no longer receive messages for the target due
  * to how Redis handled Pub/Sub subscription.
  * 
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @since 2.1
  */
 public interface ReactiveSubscription {
@@ -55,7 +58,7 @@ public interface ReactiveSubscription {
 
 	/**
 	 * Cancels the current subscription for all {@link #getChannels() channels} given by name.
-	 * 
+	 *
 	 * @return empty {@link Mono} that completes once the channel subscriptions are unregistered.
 	 */
 	Mono<Void> unsubscribe();
@@ -70,7 +73,7 @@ public interface ReactiveSubscription {
 
 	/**
 	 * Cancels the subscription for all channels matched by {@link #getPatterns()} patterns}.
-	 * 
+	 *
 	 * @return empty {@link Mono} that completes once the patterns subscriptions are unregistered.
 	 */
 	Mono<Void> pUnsubscribe();
@@ -88,43 +91,44 @@ public interface ReactiveSubscription {
 	 *
 	 * @return collection of named channels
 	 */
-	Collection<ByteBuffer> getChannels();
+	Set<ByteBuffer> getChannels();
 
 	/**
 	 * Returns the channel patters for this subscription.
 	 *
 	 * @return collection of channel patterns
 	 */
-	Collection<ByteBuffer> getPatterns();
+	Set<ByteBuffer> getPatterns();
 
 	/**
 	 * Retrieve the message stream emitting {@link ChannelMessage} and {@link PatternMessage}. The resulting message
 	 * stream contains only messages for subscribed and registered {@link #getChannels() channels} and
 	 * {@link #getPatterns() patterns}.
-	 * <p/>
+	 * <p />
 	 * Stream publishing uses {@link reactor.core.publisher.ConnectableFlux} turning the stream into a hot sequence.
 	 * Emission is paused if there is no demand. Messages received in that time are buffered. This stream terminates
 	 * either if all subscribers unsubscribe or if this {@link Subscription} is {@link #terminate() is terminated}.
-	 * 
+	 *
 	 * @return the message stream.
 	 */
-	Flux<ChannelMessage<ByteBuffer, ByteBuffer>> receive();
+	Flux<ChannelMessage<ByteBuffer, ByteBuffer>> receive(); // TODO: wording!
 
 	/**
 	 * Unsubscribe from all {@link #getChannels() channels} and {@link #getPatterns() patterns} and request termination of
 	 * all active {@link #receive() message streams}. Active streams will terminate with a
 	 * {@link java.util.concurrent.CancellationException}.
-	 * 
+	 *
 	 * @return a {@link Mono} that completes once termination is finished.
 	 */
-	Mono<Void> terminate();
+	Mono<Void> terminate(); // TODO: wording
 
 	/**
 	 * Value object for a Redis channel message.
-	 * 
+	 *
 	 * @param <C> type of how the channel name is represented.
 	 * @param <B> type of how the message is represented.
 	 * @author Mark Paluch
+	 * @author Christoph Strobl
 	 * @since 2.1
 	 */
 	@EqualsAndHashCode
@@ -135,11 +139,15 @@ public interface ReactiveSubscription {
 
 		/**
 		 * Create a new {@link ChannelMessage}.
-		 * 
+		 *
 		 * @param channel must not be {@literal null}.
 		 * @param message must not be {@literal null}.
 		 */
 		public ChannelMessage(C channel, B message) {
+
+			Assert.notNull(channel, "Channel must not be null!");
+			Assert.notNull(message, "Message must not be null!");
+
 			this.channel = channel;
 			this.message = message;
 		}
@@ -151,15 +159,21 @@ public interface ReactiveSubscription {
 		public B getMessage() {
 			return message;
 		}
+
+		@Override
+		public String toString() {
+			return "ChannelMessage{" + "channel=" + channel + ", message=" + message + '}';
+		}
 	}
 
 	/**
 	 * Value object for a Redis channel message received from a pattern subscription.
-	 * 
-	 * @param <C> type of how the pattern is represented.
+	 *
+	 * @param <P> type of how the pattern is represented.
 	 * @param <C> type of how the channel name is represented.
 	 * @param <B> type of how the message is represented.
 	 * @author Mark Paluch
+	 * @author Christoph Strobl
 	 * @since 2.1
 	 */
 	@EqualsAndHashCode(callSuper = true)
@@ -177,11 +191,18 @@ public interface ReactiveSubscription {
 		public PatternMessage(P pattern, C channel, B message) {
 
 			super(channel, message);
+
+			Assert.notNull(pattern, "Pattern must not be null!");
 			this.pattern = pattern;
 		}
 
 		public P getPattern() {
 			return pattern;
+		}
+
+		@Override
+		public String toString() {
+			return "PatternMessage{" + "channel=" + getChannel() + ", pattern=" + pattern + ", message=" + getMessage() + '}';
 		}
 	}
 }

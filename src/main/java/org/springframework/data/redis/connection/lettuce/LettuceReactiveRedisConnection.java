@@ -175,7 +175,7 @@ class LettuceReactiveRedisConnection implements ReactiveRedisConnection {
 	 * @see org.springframework.data.redis.connection.ReactiveRedisConnection#pubSubCommands()
 	 */
 	@Override
-	public ReactiveRedisPubSubCommands pubSubCommands() {
+	public ReactivePubSubCommands pubSubCommands() {
 		return new LettuceReactivePubSubCommands(this);
 	}
 

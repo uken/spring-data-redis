@@ -34,9 +34,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.redis.connection.ReactivePubSubCommands;
 import org.springframework.data.redis.connection.ReactiveRedisConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.ReactiveRedisPubSubCommands;
 import org.springframework.data.redis.connection.ReactiveSubscription;
 import org.springframework.data.redis.connection.ReactiveSubscription.ChannelMessage;
 import org.springframework.data.redis.connection.ReactiveSubscription.PatternMessage;
@@ -53,7 +53,7 @@ public class ReactiveRedisMessageListenerContainerUnitTests {
 
 	@Mock ReactiveRedisConnectionFactory connectionFactoryMock;
 	@Mock ReactiveRedisConnection connectionMock;
-	@Mock ReactiveRedisPubSubCommands commandsMock;
+	@Mock ReactivePubSubCommands commandsMock;
 	@Mock ReactiveSubscription subscriptionMock;
 
 	@Before
@@ -85,8 +85,8 @@ public class ReactiveRedisMessageListenerContainerUnitTests {
 		when(subscriptionMock.receive()).thenReturn(Flux.never());
 		container = createContainer();
 
-		StepVerifier.create(container.receive(PatternTopic.of("foo*"), PatternTopic.of("bar*"))).thenRequest(1)
-				.thenAwait().thenCancel().verify();
+		StepVerifier.create(container.receive(PatternTopic.of("foo*"), PatternTopic.of("bar*"))).thenRequest(1).thenAwait()
+				.thenCancel().verify();
 
 		verify(subscriptionMock).pSubscribe(getByteBuffer("foo*"), getByteBuffer("bar*"));
 	}
@@ -265,6 +265,7 @@ public class ReactiveRedisMessageListenerContainerUnitTests {
 
 	private static PatternMessage<ByteBuffer, ByteBuffer, ByteBuffer> createPatternMessage(String pattern, String channel,
 			String body) {
+
 		return new PatternMessage<>(getByteBuffer(pattern), getByteBuffer(channel), getByteBuffer(body));
 	}
 }

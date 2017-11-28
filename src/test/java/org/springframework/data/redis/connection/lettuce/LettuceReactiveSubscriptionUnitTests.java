@@ -42,7 +42,7 @@ import org.springframework.data.redis.connection.ReactiveSubscription.PatternMes
 
 /**
  * Unit tests for {@link LettuceReactiveSubscription}.
- * 
+ *
  * @author Mark Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -221,13 +221,15 @@ public class LettuceReactiveSubscriptionUnitTests {
 	}
 
 	private static io.lettuce.core.pubsub.api.reactive.ChannelMessage<ByteBuffer, ByteBuffer> createChannelMessage(
-			String channel, String body) {
-		return new io.lettuce.core.pubsub.api.reactive.ChannelMessage<>(getByteBuffer(channel), getByteBuffer(body));
+			String channel, String message) {
+
+		return new io.lettuce.core.pubsub.api.reactive.ChannelMessage<>(getByteBuffer(channel), getByteBuffer(message));
 	}
 
 	private static io.lettuce.core.pubsub.api.reactive.PatternMessage<ByteBuffer, ByteBuffer> createPatternMessage(
-			String pattern, String channel, String body) {
+			String pattern, String channel, String message) {
+
 		return new io.lettuce.core.pubsub.api.reactive.PatternMessage<>(getByteBuffer(pattern), getByteBuffer(channel),
-				getByteBuffer(body));
+				getByteBuffer(message));
 	}
 }

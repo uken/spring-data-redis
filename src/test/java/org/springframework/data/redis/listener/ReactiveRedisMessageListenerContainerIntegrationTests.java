@@ -44,7 +44,7 @@ import org.springframework.lang.Nullable;
 
 /**
  * Integration tests for {@link ReactiveRedisMessageListenerContainer} via Lettuce.
- * 
+ *
  * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
