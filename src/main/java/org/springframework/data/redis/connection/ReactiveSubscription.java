@@ -123,19 +123,30 @@ public interface ReactiveSubscription {
 	Mono<Void> terminate(); // TODO: wording
 
 	/**
+	 * @param <T> message representation type
+	 * @author Christoph Strobl
+	 * @since 2.1
+	 */
+	interface Message<T> {
+
+		T getMessage();
+
+	}
+
+	/**
 	 * Value object for a Redis channel message.
 	 *
 	 * @param <C> type of how the channel name is represented.
-	 * @param <B> type of how the message is represented.
+	 * @param <M> type of how the message is represented.
 	 * @author Mark Paluch
 	 * @author Christoph Strobl
 	 * @since 2.1
 	 */
 	@EqualsAndHashCode
-	class ChannelMessage<C, B> {
+	class ChannelMessage<C, M> implements Message<M> {
 
 		private final C channel;
-		private final B message;
+		private final M message;
 
 		/**
 		 * Create a new {@link ChannelMessage}.
@@ -143,7 +154,7 @@ public interface ReactiveSubscription {
 		 * @param channel must not be {@literal null}.
 		 * @param message must not be {@literal null}.
 		 */
-		public ChannelMessage(C channel, B message) {
+		public ChannelMessage(C channel, M message) {
 
 			Assert.notNull(channel, "Channel must not be null!");
 			Assert.notNull(message, "Message must not be null!");
@@ -156,7 +167,7 @@ public interface ReactiveSubscription {
 			return channel;
 		}
 
-		public B getMessage() {
+		public M getMessage() {
 			return message;
 		}
 
@@ -171,13 +182,13 @@ public interface ReactiveSubscription {
 	 *
 	 * @param <P> type of how the pattern is represented.
 	 * @param <C> type of how the channel name is represented.
-	 * @param <B> type of how the message is represented.
+	 * @param <M> type of how the message is represented.
 	 * @author Mark Paluch
 	 * @author Christoph Strobl
 	 * @since 2.1
 	 */
 	@EqualsAndHashCode(callSuper = true)
-	class PatternMessage<P, C, B> extends ChannelMessage<C, B> {
+	class PatternMessage<P, C, M> extends ChannelMessage<C, M> {
 
 		private final P pattern;
 
@@ -188,7 +199,7 @@ public interface ReactiveSubscription {
 		 * @param channel must not be {@literal null}.
 		 * @param message must not be {@literal null}.
 		 */
-		public PatternMessage(P pattern, C channel, B message) {
+		public PatternMessage(P pattern, C channel, M message) {
 
 			super(channel, message);
 

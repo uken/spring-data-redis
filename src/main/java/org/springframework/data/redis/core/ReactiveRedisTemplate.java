@@ -22,6 +22,7 @@ import java.lang.reflect.Proxy;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
@@ -30,9 +31,12 @@ import org.springframework.data.redis.connection.ReactiveRedisConnection;
 import org.springframework.data.redis.connection.ReactiveRedisConnection.CommandResponse;
 import org.springframework.data.redis.connection.ReactiveRedisConnection.KeyCommand;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.ReactiveSubscription.Message;
 import org.springframework.data.redis.core.script.DefaultReactiveScriptExecutor;
 import org.springframework.data.redis.core.script.ReactiveScriptExecutor;
 import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
+import org.springframework.data.redis.listener.Topic;
 import org.springframework.data.redis.serializer.RedisElementReader;
 import org.springframework.data.redis.serializer.RedisElementWriter;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -206,6 +210,29 @@ public class ReactiveRedisTemplate<K, V> implements ReactiveRedisOperations<K, V
 		return createMono(connection -> connection.pubSubCommands().publish(
 				getSerializationContext().getStringSerializationPair().write(destination),
 				getSerializationContext().getValueSerializationPair().write(message)));
+	}
+
+	@Override
+	public Flux<? extends Message<V>> listenTo(Topic... topics) {
+
+		ReactiveRedisMessageListenerContainer container = new ReactiveRedisMessageListenerContainer(getConnectionFactory());
+
+		return container
+				.receive(Arrays.asList(topics), getSerializationContext().getStringSerializationPair(),
+						getSerializationContext().getValueSerializationPair()) //
+				.delayUntil(discard -> {
+
+					try {
+						while (container.getActiveSubscriptions().isEmpty()) {
+							Thread.sleep(10);
+						}
+
+					} catch (InterruptedException e) {
+						return Mono.delay(Duration.ZERO);
+					}
+					return Mono.delay(Duration.ZERO);
+				}) //
+				.doFinally((signalType) -> container.destroy());
 	}
 
 	// -------------------------------------------------------------------------

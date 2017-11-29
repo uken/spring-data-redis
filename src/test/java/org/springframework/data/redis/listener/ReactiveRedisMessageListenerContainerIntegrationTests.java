@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import reactor.core.Disposable;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -35,6 +36,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.springframework.data.redis.ConnectionFactoryTracker;
 import org.springframework.data.redis.connection.ReactiveSubscription;
+import org.springframework.data.redis.connection.ReactiveSubscription.ChannelMessage;
 import org.springframework.data.redis.connection.ReactiveSubscription.PatternMessage;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -152,6 +154,25 @@ public class ReactiveRedisMessageListenerContainerIntegrationTests {
 
 		subscription.dispose();
 		container.destroy();
+	}
+
+	@Test // DATAREDIS-612
+	public void listenToChannelShouldReceiveChannelMessagesCorrectlyy() throws InterruptedException {
+
+		ReactiveRedisTemplate<String, String> template = new ReactiveRedisTemplate<>(connectionFactory,
+				RedisSerializationContext.string());
+
+		StepVerifier.create(template.listenToChannel(CHANNEL1)) //
+				.thenAwait(Duration.ofMillis(500)).then(() -> {
+					connection.publish(CHANNEL1.getBytes(), MESSAGE.getBytes());
+				}) //
+				.thenRequest(1) //
+				.consumeNextWith(message -> {
+
+					assertThat(message).isInstanceOf(ChannelMessage.class);
+					assertThat(message.getMessage()).isEqualTo(MESSAGE);
+					assertThat(((ChannelMessage) message).getChannel()).isEqualTo(CHANNEL1);
+				}).thenCancel().verify();
 	}
 
 	private static Runnable awaitSubscription(Supplier<Collection<ReactiveSubscription>> activeSubscriptions) {

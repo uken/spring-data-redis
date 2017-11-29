@@ -20,16 +20,22 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
 import org.springframework.data.redis.connection.DataType;
+import org.springframework.data.redis.connection.ReactiveSubscription.Message;
 import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.Topic;
 import org.springframework.data.redis.serializer.RedisElementReader;
 import org.springframework.data.redis.serializer.RedisElementWriter;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.util.Assert;
 
 /**
  * Interface that specified a basic set of Redis operations, implemented by {@link ReactiveRedisTemplate}. Not often
@@ -66,6 +72,33 @@ public interface ReactiveRedisOperations<K, V> {
 	 * @see <a href="http://redis.io/commands/publish">Redis Documentation: PUBLISH</a>
 	 */
 	Mono<Long> convertAndSend(String destination, V message);
+
+	/**
+	 * @param channels
+	 * @return
+	 */
+	default Flux<? extends Message<V>> listenToChannel(String... channels) {
+
+		Assert.notNull(channels, "Channels must not be null!");
+
+		return listenTo(Arrays.stream(channels).map(ChannelTopic::of).toArray(ChannelTopic[]::new));
+	}
+
+	/**
+	 * @param patterns
+	 * @return
+	 */
+	default Flux<? extends Message<V>> listenToPattern(String... patterns) {
+
+		Assert.notNull(patterns, "Patterns must not be null!");
+		return listenTo(Arrays.stream(patterns).map(PatternTopic::of).toArray(PatternTopic[]::new));
+	}
+
+	/**
+	 * @param topics
+	 * @return
+	 */
+	Flux<? extends Message<V>> listenTo(Topic... topics);
 
 	// -------------------------------------------------------------------------
 	// Methods dealing with Redis Keys
