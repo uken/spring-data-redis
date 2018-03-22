@@ -277,7 +277,8 @@ class DefaultReactiveHashOperations<H, HK, HV> implements ReactiveHashOperations
 
 		List<HV> values = new ArrayList<>(source.size());
 		for (ByteBuffer byteBuffer : source) {
-			values.add(readHashValue(byteBuffer));
+			if(byteBuffer != null)
+				values.add(readHashValue(byteBuffer));
 		}
 		return values;
 	}
